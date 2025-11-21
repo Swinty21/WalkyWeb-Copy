@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+@theme {
+    --color-primary: #16a34a;     
+    --color-secondary: #f2f2f2;   
+    --color-accent: #a5a8ac;      
+    --color-background: #ffffff;
+    --color-background-input: #0f172a;
+    --color-foreground: #020817;
+    --color-foreground2: #f1f5f9;
+    --color-foreground-userProfile: #1e293b;
+    --color-card: #FFFFFF;
+    --color-card2: #f2f2f2;
+    --color-popover: #FFFFFF;
+    --color-muted: #F0F1F3;
+    --color-destructive: #ff9999;
+    --color-border: #E0E0E0;
+    --color-input: #0f172a;
+    --color-ring: #0A8537;
+
+    /* === NUEVOS === */
+    --color-warning: #facc15;   
+    --color-danger: #dc2626;    
+    --color-success: #22c55e;   
+    --color-info: #0284c7;      
+    --color-good: #14b8a6;      
+    --color-neutral: #9ca3af;   
+    --color-black: #f1f5f9;
+    --color-white: #0f172a; 
+    --color-yellow-red: #ef4444;  
+
+    --font-family-sans: 'Anek Telugu', sans-serif;
+    
+    --font-size-heading: 36px;
+    --font-size-body: 14px;
+    
+    --font-weight-heading: 700;
+    --font-weight-body: 400;
+}
+
+.dark {
+    --color-primary: #4ade80;
+    --color-secondary: #1e293b; 
+    --color-accent: #a5a8ac; 
+    --color-background: #0f172a;
+    --color-background-input: #ffffff;
+    --color-foreground: #f1f5f9;
+    --color-foreground2: #1e293b;
+    --color-foreground-userProfile: #f1f1f1;
+    --color-card: #0f172a;
+    --color-card2: #1e293b;
+    --color-popover: #1e293b; 
+    --color-muted: #334155;
+    --color-destructive: #ef4444;
+    --color-border: #475569;
+    --color-input: #FFFFFF;
+    --color-ring: #22c55e;
+
+    /* === NUEVOS (modo oscuro) === */
+    --color-warning: #eab308;   
+    --color-danger: #f87171;    
+    --color-success: #4ade80;   
+    --color-info: #38bdf8;      
+    --color-good: #2dd4bf;      
+    --color-neutral: #6b7280;  
+    --color-black: #0f172a;
+    --color-white: #f1f5f9;  
+    --color-yellow-red: #ffd900;  
+}
+
+
+@import url('https://fonts.googleapis.com/css2?family=Anek+Telugu:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@layer base {
+    * {
+        border-color: var(--color-border);
+    }
+
+    body {
+        background-color: var(--color-background);
+        color: var(--color-foreground);
+        font-family: 'Anek Telugu', sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 700;
+    }
+
+    p {
+        font-weight: 400;
+    }
+
+    button {
+        cursor: pointer;
+    }
+
+    .btn-hover {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+}
+
+@layer utilities {
+    .text-heading {
+        font-size: 36px;
+        font-weight: 700;
+    }
+
+    .text-body {
+        font-size: 14px;
+        font-weight: 400;
+    }
+
+    .btn-neon-hover {
+        transition: all 0.3s ease;
+    }
+
+    .btn-neon-hover:hover {
+        box-shadow: 
+            0 0 20px rgba(22, 163, 74, 0.5),
+            0 0 40px rgba(22, 163, 74, 0.3), 
+            0 0 60px rgba(22, 163, 74, 0.1);
+    }
+
+    .dark .btn-neon-hover:hover {
+        box-shadow: 
+            0 0 20px rgba(74, 222, 128, 0.6),
+            0 0 40px rgba(74, 222, 128, 0.4),
+            0 0 60px rgba(74, 222, 128, 0.2);
+    }
+}
