@@ -117,7 +117,7 @@ function Register({ onRegister, switchToLogin }) {
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat relative py-8 px-4"
             style={{
-                backgroundImage: `url('../../../public/backgroundFirts.jpg')`
+                backgroundImage: "url('/backgroundFirts.jpg')"
             }}>
             <div className="absolute inset-0 backdrop-blur-[6px] bg-foreground/30"></div>
             
