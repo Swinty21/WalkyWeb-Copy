@@ -279,36 +279,6 @@ const WalkerServiceSettingsComponent = ({
                                 </p>
                             </div>
 
-                            <div className="flex items-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
-                                <div className="flex items-center flex-1">
-                                    <span className="text-black font-medium">
-                                        Modo de prueba (Sandbox)
-                                    </span>
-                                    <div className="ml-2 relative group">
-                                        <div className="w-5 h-5 bg-yellow-500 text-white rounded-full flex items-center justify-center text-xs font-bold cursor-help">
-                                            ?
-                                        </div>
-                                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 whitespace-nowrap z-10">
-                                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-                                            Usar credenciales de prueba
-                                        </div>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={handleMercadoPagoSandboxToggle}
-                                    disabled={savingMercadoPago}
-                                    className={`w-14 h-7 rounded-full relative transition-all duration-300 ${
-                                        settings.mercadoPagoSandbox ? "bg-yellow-500 shadow-lg" : "bg-gray-300"
-                                    } ${savingMercadoPago ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                                >
-                                    <span 
-                                        className={`absolute w-5 h-5 bg-white rounded-full top-1 transition-all duration-300 shadow-md ${
-                                            settings.mercadoPagoSandbox ? "right-1" : "left-1"
-                                        }`}
-                                    />
-                                </button>
-                            </div>
-
                             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl">
                                 <h4 className="font-semibold text-black mb-2">
                                     ¿Cómo obtener mis credenciales?

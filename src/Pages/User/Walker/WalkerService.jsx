@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUser } from "../../../BackEnd/Context/UserContext";
+import { useToast } from '../../../BackEnd/Context/ToastContext';
 import { WalkerController } from "../../../BackEnd/Controllers/WalkerController";
 import { WalksController } from "../../../BackEnd/Controllers/WalksController";
 import WalkerServiceHeaderComponent from "../Components/WalkerServiceComponents/WalkerServiceHeaderComponent";
@@ -7,11 +8,12 @@ import WalkerServiceStatsComponent from "../Components/WalkerServiceComponents/W
 import WalkerServiceEarningsComponent from "../Components/WalkerServiceComponents/WalkerServiceEarningsComponent";
 import WalkerServiceChartComponent from "../Components/WalkerServiceComponents/WalkerServiceChartComponent";
 import WalkerServiceSettingsComponent from "../Components/WalkerServiceComponents/WalkerServiceSettingsComponent";
-import { FaExclamationTriangle, FaCreditCard, FaTimes, FaCheckCircle } from "react-icons/fa";
+import { FaExclamationTriangle, FaCreditCard, FaTimes } from "react-icons/fa";
 
 const WalkerService = () => {
     const user = useUser();
     const walkerId = user?.id;
+    const { success, warning } = useToast();
     
     const [walkerData, setWalkerData] = useState(null);
     const [walksData, setWalksData] = useState([]);
@@ -29,10 +31,8 @@ const WalkerService = () => {
     });
     
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
     const [showMercadoPagoAlert, setShowMercadoPagoAlert] = useState(false);
-    const [successMessage, setSuccessMessage] = useState("");
 
     useEffect(() => {
         const loadWalkerData = async () => {
@@ -40,7 +40,6 @@ const WalkerService = () => {
             
             try {
                 setLoading(true);
-                setError(null);
                 
                 const [walker, walks, walkerSettings, calculatedEarnings] = await Promise.all([
                     WalkerController.fetchWalkerProfile(walkerId),
@@ -64,7 +63,10 @@ const WalkerService = () => {
                 
             } catch (err) {
                 console.error("Error loading walker data:", err);
-                setError("Error al cargar la información del paseador.");
+                warning('Error al cargar la información del paseador', {
+                    title: 'Error',
+                    duration: 4000
+                });
             } finally {
                 setLoading(false);
             }
@@ -72,15 +74,6 @@ const WalkerService = () => {
 
         loadWalkerData();
     }, [walkerId]);
-
-    useEffect(() => {
-        if (successMessage) {
-            const timer = setTimeout(() => {
-                setSuccessMessage("");
-            }, 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [successMessage]);
 
     const generateChartData = (walks) => {
         const last7Days = [];
@@ -131,7 +124,6 @@ const WalkerService = () => {
     const handleSaveSettings = async () => {
         try {
             setSaving(true);
-            setError(null);
             
             const settingsToUpdate = {
                 location: settings.location,
@@ -147,10 +139,16 @@ const WalkerService = () => {
                 ...updatedSettings
             }));
             
-            setSuccessMessage('Configuración guardada exitosamente');
+            success('Configuración guardada exitosamente', {
+                title: 'Éxito',
+                duration: 3000
+            });
         } catch (err) {
             console.error('Error saving settings:', err);
-            setError('Error al guardar la configuración: ' + (err.message || 'Error desconocido'));
+            warning(err.message || 'Error al guardar la configuración', {
+                title: 'Error',
+                duration: 4000
+            });
         } finally {
             setSaving(false);
         }
@@ -158,15 +156,19 @@ const WalkerService = () => {
 
     const handleSaveMercadoPago = async () => {
         try {
-            setError(null);
-
             if (!settings.hasMercadoPago) {
-                setError('Debes habilitar MercadoPago primero');
+                warning('Debes habilitar MercadoPago primero', {
+                    title: 'Atención',
+                    duration: 3000
+                });
                 return;
             }
 
             if (!settings.tokenMercadoPago || settings.tokenMercadoPago.trim() === '') {
-                setError('El Access Token es requerido');
+                warning('El Access Token es requerido', {
+                    title: 'Atención',
+                    duration: 3000
+                });
                 return;
             }
             
@@ -189,10 +191,16 @@ const WalkerService = () => {
                 setShowMercadoPagoAlert(false);
             }
             
-            setSuccessMessage('Configuración de MercadoPago guardada exitosamente');
+            success('Configuración de MercadoPago guardada exitosamente', {
+                title: 'Éxito',
+                duration: 3000
+            });
         } catch (err) {
             console.error('Error saving MercadoPago:', err);
-            setError('Error al guardar MercadoPago: ' + (err.message || 'Error desconocido'));
+            warning(err.message || 'Error al guardar MercadoPago', {
+                title: 'Error',
+                duration: 4000
+            });
         }
     };
 
@@ -215,12 +223,12 @@ const WalkerService = () => {
         );
     }
 
-    if (error && !walkerData) {
+    if (!walkerData) {
         return (
             <div className="w-full min-h-screen p-6 bg-background dark:bg-foreground">
                 <div className="bg-foreground-userProfile p-6 rounded-lg shadow-lg">
                     <div className="flex justify-center items-center h-64">
-                        <p className="text-lg text-danger">{error}</p>
+                        <p className="text-lg text-danger">No se pudo cargar la información</p>
                     </div>
                 </div>
             </div>
@@ -232,42 +240,6 @@ const WalkerService = () => {
     return (
         <div className="max-w min-h-screen p-6 bg-background dark:bg-foreground">
             <div className="mx-auto space-y-6">
-                
-                {successMessage && (
-                    <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 dark:from-green-500/20 dark:to-emerald-500/20 border-l-4 border-green-500 p-6 rounded-lg shadow-lg">
-                        <div className="flex items-center space-x-4">
-                            <div className="p-2 bg-green-500 rounded-full">
-                                <FaCheckCircle className="text-white text-xl" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-green-800 dark:text-green-200 font-semibold">
-                                    {successMessage}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {error && (
-                    <div className="bg-gradient-to-r from-red-500/10 to-pink-500/10 dark:from-red-500/20 dark:to-pink-500/20 border-l-4 border-red-500 p-6 rounded-lg shadow-lg">
-                        <div className="flex items-center space-x-4">
-                            <div className="p-2 bg-red-500 rounded-full">
-                                <FaExclamationTriangle className="text-white text-xl" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-red-800 dark:text-red-200 font-semibold">
-                                    {error}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setError(null)}
-                                className="text-red-500 hover:text-red-700 transition-all duration-200 p-1 rounded-full hover:bg-red-100"
-                            >
-                                <FaTimes />
-                            </button>
-                        </div>
-                    </div>
-                )}
                 
                 {showMercadoPagoAlert && (
                     <div className="bg-gradient-to-r from-warning/10 to-yellow-red/10 dark:from-warning/20 dark:to-yellow-red/20 border-l-4 border-warning p-6 rounded-lg shadow-lg animate-pulse">

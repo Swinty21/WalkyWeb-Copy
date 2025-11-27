@@ -4,6 +4,7 @@ import { WalksController } from '../../../BackEnd/Controllers/WalksController';
 import { ReviewsController } from '../../../BackEnd/Controllers/ReviewsController';
 import { useUser } from '../../../BackEnd/Context/UserContext';
 import { useNavigation } from '../../../BackEnd/Context/NavigationContext';
+import { useToast } from '../../../BackEnd/Context/ToastContext';
 
 import WalkerWalksHeaderComponent from '../Components/WalkerWalksComponents/WalkerWalksHeaderComponent';
 import WalkerWalksCardComponent from '../Components/WalkerWalksComponents/WalkerWalksCardComponent';
@@ -22,7 +23,8 @@ const WalkerWalks = () => {
     const [error, setError] = useState(null);
     const [activeTab, setActiveTab] = useState("requests");
     const [searchQuery, setSearchQuery] = useState("");
-    
+    const { success, warning } = useToast();
+
     const [showAcceptModal, setShowAcceptModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showWaitingPaymentModal, setShowWaitingPaymentModal] = useState(false);
@@ -99,7 +101,11 @@ const WalkerWalks = () => {
 
     const handleAcceptWalk = (walk) => {
         if (!canAcceptWalk()) {
-            setError(`No puedes aceptar más paseos. Límite máximo: ${MAX_ACCEPTED_WALKS} paseos aceptados simultáneamente.`);
+            warning(`No puedes aceptar más paseos. Límite máximo: ${MAX_ACCEPTED_WALKS} paseos aceptados simultáneamente.`, {
+                title: 'Error',
+                duration: 4000
+            });
+            setError();
             return;
         }
         
@@ -111,7 +117,10 @@ const WalkerWalks = () => {
         if (!selectedWalk) return;
         
         if (!canAcceptWalk()) {
-            setError(`No puedes aceptar más paseos. Límite máximo: ${MAX_ACCEPTED_WALKS} paseos aceptados simultáneamente.`);
+            warning(`No puedes aceptar más paseos. Límite máximo: ${MAX_ACCEPTED_WALKS} paseos aceptados simultáneamente.`, {
+                title: 'Error',
+                duration: 4000
+            });
             setShowAcceptModal(false);
             setSelectedWalk(null);
             return;
@@ -127,8 +136,16 @@ const WalkerWalks = () => {
             ));
             setShowAcceptModal(false);
             setSelectedWalk(null);
+
+            success('Paseo aceptado', {
+                title: 'Exito',
+                duration: 4000
+            });
         } catch (err) {
-            setError('Error accepting walk: ' + err.message);
+            warning(`Intente más tarde`, {
+                title: 'Error',
+                duration: 4000
+            });
         } finally {
             setActionLoading(false);
         }
@@ -152,8 +169,16 @@ const WalkerWalks = () => {
             ));
             setShowRejectModal(false);
             setSelectedWalk(null);
+
+            success('Paseo rechazado', {
+                title: 'Exito',
+                duration: 4000
+            });
         } catch (err) {
-            setError('Error rejecting walk: ' + err.message);
+            warning(`Intente más tarde`, {
+                title: 'Error',
+                duration: 4000
+            });
         } finally {
             setActionLoading(false);
         }
@@ -168,7 +193,10 @@ const WalkerWalks = () => {
         if (!selectedWalk) return;
 
         if (selectedWalk.status !== "Activo") {
-            setError("Solo los paseos activos pueden finalizarse.");
+            warning('Solo los paseos activos pueden finalizarse.', {
+                title: 'Alerta',
+                duration: 4000
+            });
             return;
         }
 
@@ -182,8 +210,16 @@ const WalkerWalks = () => {
             ));
             setShowFinishWalkModal(false);
             setSelectedWalk(null);
+            success('Paseo Finalizado', {
+                title: 'Exito',
+                duration: 4000
+            });
+
         } catch (err) {
-            setError('Error finishing walk: ' + err.message);
+            warning(`Intente más tarde`, {
+                title: 'Error',
+                duration: 4000
+            });
         } finally {
             setActionLoading(false);
         }
@@ -196,7 +232,10 @@ const WalkerWalks = () => {
 
     const handleStartWalk = (walk) => {
         if (!canStartWalk()) {
-            setError(`No puedes iniciar más paseos. Límite máximo: ${MAX_ACTIVE_WALKS} paseos activos simultáneamente.`);
+            warning(`No puedes aceptar más paseos. Límite máximo: ${MAX_ACCEPTED_WALKS} paseos aceptados simultáneamente.`, {
+                title: 'Error',
+                duration: 4000
+            });
             return;
         }
         
@@ -208,7 +247,10 @@ const WalkerWalks = () => {
         if (!selectedWalk) return;
         
         if (!canStartWalk()) {
-            setError(`No puedes iniciar más paseos. Límite máximo: ${MAX_ACTIVE_WALKS} paseos activos simultáneamente.`);
+            warning(`No puedes aceptar más paseos. Límite máximo: ${MAX_ACCEPTED_WALKS} paseos aceptados simultáneamente.`, {
+                title: 'Error',
+                duration: 4000
+            });
             setShowStartWalkModal(false);
             setSelectedWalk(null);
             return;
@@ -224,8 +266,16 @@ const WalkerWalks = () => {
             ));
             setShowStartWalkModal(false);
             setSelectedWalk(null);
+            success('Paseo Iniciado', {
+                title: 'Exito',
+                duration: 4000
+            });
+
         } catch (err) {
-            setError('Error starting walk: ' + err.message);
+            warning(err.message, {
+                title: 'Error',
+                duration: 4000
+            });
         } finally {
             setActionLoading(false);
         }
@@ -242,8 +292,10 @@ const WalkerWalks = () => {
             setCurrentReceipt(receipt);
             setShowReceiptModal(true);
         } catch (err) {
-            setError('Error loading receipt: ' + err.message);
-            console.error('Error loading receipt:', err);
+            warning('inte más tarde', {
+                title: 'Error',
+                duration: 4000
+            });
         } finally {
             setReceiptLoading(false);
         }
@@ -261,7 +313,10 @@ const WalkerWalks = () => {
             setCurrentReview(review);
             setShowViewReviewModal(true);
         } catch (err) {
-            setError('Error loading review: ' + err.message);
+            warning('Intente más tarde', {
+                title: 'Error',
+                duration: 4000
+            });
         }
     };
 
