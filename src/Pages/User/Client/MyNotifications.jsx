@@ -47,7 +47,7 @@ const MyNotifications = () => {
             setHasPrevPage(response.hasPrevPage);
             
         } catch (err) {
-            seterrorState('errorState loading notifications: ' + err.message);
+            seterrorState('Error al cargar las notificaciones: ');
         } finally {
             setLoading(false);
         }

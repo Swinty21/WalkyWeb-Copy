@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { FiCalendar, FiUsers, FiEye, FiFilter } from "react-icons/fi";
 import { WalksController } from '../../../BackEnd/Controllers/WalksController';
 import { useNavigation } from '../../../BackEnd/Context/NavigationContext';
 
@@ -28,8 +27,7 @@ const AdminWalks = () => {
                 const walksData = await WalksController.fetchWalksForHome();
                 setWalks(walksData);
             } catch (err) {
-                setError('Error loading walks: ' + err.message);
-                console.error('Error loading walks:', err);
+                setError('Error al cargar los paseos');
             } finally {
                 setLoading(false);
             }
@@ -39,7 +37,6 @@ const AdminWalks = () => {
     }, []);
 
     const handleViewWalk = (tripId) => {
-        console.log(tripId);
         navigateToContent('trip', { tripId });
     };
 

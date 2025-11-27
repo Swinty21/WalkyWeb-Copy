@@ -33,7 +33,7 @@ const SearchWalker = () => {
                 setFilteredWalkers(walkersForSearch);
                 setAvailableLocations(uniqueLocations);
             } catch (err) {
-                setError('Error loading walkers: ' + err.message);
+                setError('Error al cargar los paseadores');
             } finally {
                 setLoading(false);
             }

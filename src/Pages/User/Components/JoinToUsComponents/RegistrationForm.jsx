@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { FaCamera, FaUser, FaPhone, FaIdCard, FaMapMarkerAlt, FaUpload, FaCloudUploadAlt } from 'react-icons/fa';
 import CloudinaryService from '../../../../BackEnd/Services/CloudinaryService';
+import {useToast} from '../../../../BackEnd/Context/ToastContext';
 
 const RegistrationForm = ({ onSubmit, loading }) => {
+    const { success, warning } = useToast();
+
     const [formData, setFormData] = useState({
         fullName: '',
         phone: '',
@@ -161,11 +164,18 @@ const RegistrationForm = ({ onSubmit, loading }) => {
 
             await onSubmit(registrationData);
             
+            success('Registro enviado con éxito. Nos pondremos en contacto pronto.', {
+                title: 'Éxito',
+                duration: 4000
+            });
+
         } catch (error) {
             
-            setErrors({ 
-                submit: error.message || 'Ocurrió un error al procesar el registro. Por favor intenta nuevamente.' 
+            warning('Ocurrió un error al procesar el registro. Por favor intenta nuevamente.', {
+                title: 'Error',
+                duration: 4000
             });
+
             setUploadProgress({
                 dniFront: false,
                 dniBack: false,

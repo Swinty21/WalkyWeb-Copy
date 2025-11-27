@@ -2,6 +2,8 @@ import { useState } from "react";
 import { FiX, FiMail, FiLock, FiKey } from "react-icons/fi";
 import { AuthController } from "../../../BackEnd/Controllers/AuthController";
 
+import { useToast } from '../../../BackEnd/Context/ToastContext';
+
 const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -12,6 +14,8 @@ const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
         confirmPassword: ""
     });
     const [errors, setErrors] = useState({});
+
+    const { success, warning} = useToast();
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -55,9 +59,16 @@ const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
             
             setStep(2);
             
+            success('Código de verificación enviado con éxito.', {
+                title: 'Éxito',
+                duration: 4000
+            });
+
         } catch (err) {
-            console.error("Error enviando código:", err);
-            setErrors({ general: err.message || "Error al enviar código" });
+            warning('No se pudo enviar el código de verificación.', {
+                title: 'Error',
+                duration: 4000
+            });
         } finally {
             setLoading(false);
         }
@@ -85,9 +96,16 @@ const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
             
             setStep(3);
             
+            success('Código verificado con éxito.', {
+                title: 'Éxito',
+                duration: 4000
+            });
+
         } catch (err) {
-            console.error("Error verificando código:", err);
-            setErrors({ code: err.message || "Código inválido o expirado" });
+            warning('No se pudo verificar el código de verificación.', {
+                title: 'Error',
+                duration: 4000
+            });
         } finally {
             setLoading(false);
         }
@@ -129,9 +147,18 @@ const ForgotPasswordModal = ({ isOpen, onClose, onSuccess }) => {
             onSuccess();
             handleClose();
             
+            success('Contraseña cambiada con éxito.', {
+                title: 'Éxito',
+                duration: 4000
+            });
+
         } catch (err) {
-            console.error("Error cambiando contraseña:", err);
-            setErrors({ general: err.message || "Error al cambiar contraseña" });
+
+            warning('No se pudo cambiar la contraseña.', {
+                title: 'Error',
+                duration: 4000
+            });
+
         } finally {
             setLoading(false);
         }

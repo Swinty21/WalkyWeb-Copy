@@ -62,7 +62,6 @@ const WalkerService = () => {
                 setShowMercadoPagoAlert(!isMercadoPagoConfigured);
                 
             } catch (err) {
-                console.error("Error loading walker data:", err);
                 warning('Error al cargar la información del paseador', {
                     title: 'Error',
                     duration: 4000

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { FiUsers, FiHeart } from "react-icons/fi";
 import { MdPets } from "react-icons/md";
 import { PetsController } from '../../../BackEnd/Controllers/PetsController';
 import { UserController } from '../../../BackEnd/Controllers/UserController';
+import { useToast } from '../../../BackEnd/Context/ToastContext';
 
 import AdminPetsHeaderComponent from '../Components/AdminPetsComponents/AdminPetsHeaderComponent';
 import AdminPetsCardComponent from '../Components/AdminPetsComponents/AdminPetsCardComponent';
@@ -21,6 +21,7 @@ const AdminPets = () => {
 
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedPet, setSelectedPet] = useState(null);
+    const { success, warning} = useToast();
 
     useEffect(() => {
         const loadData = async () => {
@@ -35,8 +36,7 @@ const AdminPets = () => {
                 const allPets = await getAllPetsFromAllOwners(allUsers);
                 setPets(allPets);
             } catch (err) {
-                setError('Error loading data: ' + err.message);
-                console.error('Error loading data:', err);
+                setError('Error al cargar la información de las Mascotas de los usuarios');
             } finally {
                 setLoading(false);
             }
@@ -60,7 +60,7 @@ const AdminPets = () => {
                         ownerName: user.fullName
                     }));
                 } catch (error) {
-                    console.warn(`No pets found for user ${user.id} (${user.fullName})`);
+                    setError('Error al cargar la información de las Mascotas de los usuarios');
                     return [];
                 }
             });
@@ -68,7 +68,7 @@ const AdminPets = () => {
             const allPetsArrays = await Promise.all(allPetsPromises);
             return allPetsArrays.flat();
         } catch (error) {
-            throw new Error('Failed to fetch all pets: ' + error.message);
+            throw new Error('Error al cargar la información de las Mascotas de los usuarios');
         }
     };
 
@@ -83,10 +83,15 @@ const AdminPets = () => {
             setRefreshTrigger(prev => prev + 1);
             setShowEditModal(false);
             setSelectedPet(null);
-            alert("Mascota actualizada correctamente");
+            success('Mascota actualizada correctamente.', {
+                title: 'Exito',
+                duration: 4000
+            });
         } catch (error) {
-            console.error("Error al actualizar mascota:", error);
-            alert(`Error al actualizar la mascota: ${error.message}`);
+            warning('Error al actualizar la mascota.', {
+                title: 'Error',
+                duration: 4000
+            });
         }
     };
 

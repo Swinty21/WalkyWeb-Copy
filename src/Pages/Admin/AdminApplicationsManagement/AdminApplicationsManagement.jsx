@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FaUsers, FaClock, FaCheckCircle, FaTimes, FaFilter } from 'react-icons/fa';
 import { JoinToUsController } from '../../../BackEnd/Controllers/JoinToUsController';
-import { UserController } from '../../../BackEnd/Controllers/UserController';
-
+import { useToast } from '../../../BackEnd/Context/ToastContext';
 import ApplicationsList from '../Components/AdminApplicationsComponents/ApplicationsList';
 import ApplicationDetails from '../Components/AdminApplicationsComponents/ApplicationDetails';
 import ApplicationsStats from '../Components/AdminApplicationsComponents/ApplicationsStats';
@@ -25,6 +24,7 @@ const AdminApplicationsManagement = () => {
         under_review: 0
     });
     const [errors, setErrors] = useState({});
+    const { success, warning} = useToast();
 
     useEffect(() => {
         loadApplications();
@@ -41,7 +41,6 @@ const AdminApplicationsManagement = () => {
             const response = await JoinToUsController.getAllRegistrations();
             setApplications(response);
         } catch (error) {
-            console.error('Error loading applications:', error);
             setErrors({ load: 'Error al cargar las solicitudes' });
         } finally {
             setLoading(false);
@@ -53,7 +52,7 @@ const AdminApplicationsManagement = () => {
             const response = await JoinToUsController.getRegistrationStats();
             setStats(response);
         } catch (error) {
-            console.error('Error loading stats:', error);
+            setErrors({ load: 'Error al cargar las estadísticas' });
         }
     };
 
@@ -119,10 +118,14 @@ const AdminApplicationsManagement = () => {
             setShowReviewModal(false);
             setReviewAction(null);
 
+            success(`Solicitud ${reviewAction === 'approve' ? 'aprobada' : 'rechazada'} con éxito.`, {
+                    title: 'Éxito',
+                    duration: 4000
+                });
         } catch (error) {
-            console.error('Error reviewing application:', error);
-            setErrors({ 
-                review: error.message || 'Error al procesar la solicitud' 
+            warning('No se pudo procesar la solicitud.', {
+                title: 'Error',
+                duration: 4000
             });
         } finally {
             setReviewing(false);

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { FiUsers, FiShield, FiUserPlus } from "react-icons/fi";
 import { UserController } from '../../../BackEnd/Controllers/UserController';
 import { useUser } from "../../../BackEnd/Context/UserContext";
+import { useToast } from '../../../BackEnd/Context/ToastContext';
 
 import AdminUsersHeaderComponent from '../Components/AdminUsersComponents/AdminUsersHeaderComponent';
 import AdminUsersCardComponent from '../Components/AdminUsersComponents/AdminUsersCardComponent';
@@ -15,6 +16,8 @@ const AdminUsers = () => {
     const [error, setError] = useState(null);
     const [userStats, setUserStats] = useState({});
     const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    const { success, warning} = useToast();
 
     const [searchQuery, setSearchQuery] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
@@ -43,8 +46,7 @@ const AdminUsers = () => {
                 setUsers(usersData);
                 setUserStats(statsData);
             } catch (err) {
-                setError('Error loading users: ' + err.message);
-                console.error('Error loading users:', err);
+                setError('Error al cargar los usuarios');
             } finally {
                 setLoading(false);
             }
@@ -56,7 +58,10 @@ const AdminUsers = () => {
     const handleEditUser = (user) => {
         // Prevenir que el usuario se edite a sí mismo
         if (user.id === currentUserId) {
-            alert("No puedes editarte a ti mismo");
+            warning('No puedes editarte a ti mismo.', {
+                title: 'Error',
+                duration: 4000
+            });
             return;
         }
         setSelectedUser(user);
@@ -66,7 +71,10 @@ const AdminUsers = () => {
     const handleDeleteUser = (user) => {
         // Prevenir que el usuario se elimine a sí mismo
         if (user.id === currentUserId) {
-            alert("No puedes eliminarte a ti mismo");
+            warning('No puedes eliminarte a ti mismo.', {
+                title: 'Error',
+                duration: 4000
+            });
             return;
         }
         setSelectedUser(user);
@@ -74,17 +82,20 @@ const AdminUsers = () => {
     };
 
     const handleSaveEditUser = async (userId, userData) => {
-        try {
-            console.log("AdminUsers - Guardando con updateUserByAdmin:", { userId, userData });
-            
+        try {            
             await UserController.updateUserByAdmin(userId, userData);
             setRefreshTrigger(prev => prev + 1);
             setShowEditModal(false);
             setSelectedUser(null);
-            alert("Usuario actualizado correctamente");
+            success('Usuario actualizado correctamente', {
+                title: 'Exito',
+                duration: 4000
+            });
         } catch (error) {
-            console.error("Error al actualizar usuario:", error);
-            alert(`Error al actualizar el usuario: ${error.message}`);
+            warning('Error al actualizar el usuario.', {
+                title: 'Error',
+                duration: 4000
+            });
         }
     };
 
@@ -94,10 +105,15 @@ const AdminUsers = () => {
             setRefreshTrigger(prev => prev + 1);
             setShowDeleteModal(false);
             setSelectedUser(null);
-            alert("Usuario eliminado correctamente");
+            success('Usuario eliminado correctamente', {
+                title: 'Exito',
+                duration: 4000
+            });
         } catch (error) {
-            console.error("Error al eliminar usuario:", error);
-            alert(`Error al eliminar el usuario: ${error.message}`);
+            warning('Error al eliminar el usuario.', {
+                title: 'Error',
+                duration: 4000
+            });
         }
     };
 

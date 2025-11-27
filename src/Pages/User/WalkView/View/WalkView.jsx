@@ -24,7 +24,6 @@ const WalkView = ({ id }) => {
                 setWalkData(data);
                 setError(null);
             } catch (error) {
-                console.error('Error cargando datos del paseo:', error);
                 setError("Error al cargar los datos del paseo");
             } finally {
                 setLoading(false);

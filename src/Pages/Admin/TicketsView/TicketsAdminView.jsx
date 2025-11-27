@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { TicketController } from '../../../BackEnd/Controllers/TicketController.js';
+import { TicketController } from '../../../BackEnd/Controllers/TicketController';
+import { useToast } from '../../../BackEnd/Context/ToastContext';
 
-import AdminTicketsHeaderComponent from '../Components/TicketsAdminComponents/AdminTicketsHeaderComponent.jsx';
-import AdminPendingTicketsTable from '../Components/TicketsAdminComponents/AdminPendingTicketsTable.jsx';
-import AdminResolvedTicketsTable from '../Components/TicketsAdminComponents/AdminResolvedTicketsTable.jsx';
-import AdminTicketResponseModal from '../Components/TicketsAdminComponents/AdminTicketResponseModal.jsx';
+import AdminTicketsHeaderComponent from '../Components/TicketsAdminComponents/AdminTicketsHeaderComponent';
+import AdminPendingTicketsTable from '../Components/TicketsAdminComponents/AdminPendingTicketsTable';
+import AdminResolvedTicketsTable from '../Components/TicketsAdminComponents/AdminResolvedTicketsTable';
+import AdminTicketResponseModal from '../Components/TicketsAdminComponents/AdminTicketResponseModal';
 import AdminTicketsFilter from '../Filters/TicketsAdminFilter/AdminTicketsFilter.jsx';
 
 const TicketsAdminView = () => {
@@ -19,6 +20,8 @@ const TicketsAdminView = () => {
     const [isResponseModalOpen, setIsResponseModalOpen] = useState(false);
     const [responseLoading, setResponseLoading] = useState(false);
 
+    const { success, warning } = useToast();
+
     useEffect(() => {
         loadAllTickets();
     }, []);
@@ -31,8 +34,7 @@ const TicketsAdminView = () => {
             const allTickets = await TicketController.fetchAllTickets();
             setTickets(allTickets);
         } catch (err) {
-            setError('Error loading tickets: ' + err.message);
-            console.error('Error loading tickets:', err);
+            setError('Error al cargar los tickets');
         } finally {
             setLoading(false);
         }
@@ -74,7 +76,10 @@ const TicketsAdminView = () => {
                 )
             );
             
-            console.log('Ticket response sent successfully:', result);
+            success('Respuesta al ticket enviada con éxito.', {
+                title: 'Éxito',
+                duration: 4000
+            });
             
             setIsResponseModalOpen(false);
             setSelectedTicket(null);
@@ -82,8 +87,10 @@ const TicketsAdminView = () => {
             await loadAllTickets();
             
         } catch (error) {
-            console.error('Error responding to ticket:', error);
-            setError('Error al responder el ticket: ' + error.message);
+            warning('No se pudo enviar la respuesta al ticket.', {
+                title: 'Error',
+                duration: 4000
+            });
         } finally {
             setResponseLoading(false);
         }
