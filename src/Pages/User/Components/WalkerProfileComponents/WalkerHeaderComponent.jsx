@@ -1,5 +1,8 @@
 import { AiOutlineStar } from "react-icons/ai";
+import { useState, useEffect } from "react";
 import { MdGpsFixed, MdGpsOff, MdLocationOn, MdWork } from "react-icons/md";
+import { useUser } from '../../../../BackEnd/Context/UserContext';
+import { UserController } from "../../../../BackEnd/Controllers/UserController";
 
 const WalkerHeaderComponent = ({ 
     walkerData, 
@@ -9,6 +12,28 @@ const WalkerHeaderComponent = ({
 }) => {
     const buttonBase = "px-4 py-2 rounded-lg font-semibold transition-all duration-200 shadow-sm";
     const buttonActive = "bg-primary text-white shadow-md";
+    const [userData, setuserData] = useState({});
+    const user = useUser();
+    const userId = user?.id;
+
+    useEffect(() => {
+        if (userId) {
+            loadUserData();
+        }
+    }, [userId]);
+
+    const loadUserData = async () => {
+        try{
+            const userData_temp = await UserController.fetchUserById(user.id);
+            setuserData({
+                id: userData_temp.id,
+                name: userData_temp.fullName || "X",
+                rol: userData_temp.role || "No disponible",
+            });
+        }
+        catch(err){
+        }
+    }
 
     return (
         <div className="bg-foreground-userProfile p-6 rounded-lg shadow-lg mb-6">
@@ -53,7 +78,7 @@ const WalkerHeaderComponent = ({
                         <div className="flex items-center space-x-1">
                             <MdWork className="text-primary w-5 h-5" />
                             <span className="text-sm text-accent dark:text-muted">
-                                {walkerData.experienceYears} años de experiencia
+                                {walkerData.experienceYears}
                             </span>
                         </div>
                     </div>
@@ -70,7 +95,7 @@ const WalkerHeaderComponent = ({
                             onClick={onRequestWalk}
                             className={`${buttonBase} ${buttonActive} w-full md:w-auto px-8`}
                         >
-                            Solicitar Paseo
+                            {userData.rol !== 'walker' ? <span>Solicitar Paseo</span> : <span>Ver Info de Solicitud de Paseo</span>}
                         </button>
                     </div>
                 </div>

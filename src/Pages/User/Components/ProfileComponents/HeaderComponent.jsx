@@ -2,7 +2,6 @@ import { useState } from "react";
 import { FiSettings, FiLock, FiUser } from "react-icons/fi";
 import { UserController } from "../../../../BackEnd/Controllers/UserController";
 import { useNavigation } from "../../../../BackEnd/Context/NavigationContext";
-import { useToast } from '../../../../BackEnd/Context/ToastContext';
 import EditProfileModal from "../../Modals/ProfileModals/EditProfileModal";
 import ChangePassModal from "../../Modals/ProfileModals/ChangePassModal";
 
@@ -11,35 +10,20 @@ const HeaderComponent = ({ userData, buttonBase, buttonInactive, onUpdateProfile
     const [isChangePassModalOpen, setIsChangePassModalOpen] = useState(false);
 
     const { navigateToContent } = useNavigation();
-    const { success, error } = useToast();
 
     const handleSaveProfile = async (updatedData) => {
         try {
-            success('Perfil Actualizado', {
-                title: 'Éxito',
-                duration: 4000
-            });
             onUpdateProfile?.(updatedData);
         } catch (er) {
-            error('Error al Actualizar perfil', {
-                title: 'Error',
-                duration: 4000
-            });
+            
         }
     };
 
     const handleChangePassword = async (passwordData) => {
         try {
             await UserController.changeUserPassword(userId, passwordData);
-            success('Contraseña cambiada correctamente', {
-                title: 'Éxito',
-                duration: 4000
-            });
         } catch (er) {
-            error('Error al cambiar contraseña', {
-                title: 'Error',
-                duration: 4000
-            });
+            
         }
     };
 
