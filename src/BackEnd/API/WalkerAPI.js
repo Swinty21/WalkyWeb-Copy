@@ -49,16 +49,31 @@ export const WalkerAPI = {
         } catch (error) {
             console.error(`Error al obtener configuraciones del paseador ${walkerId}:`, error);
             
-            return {
-                location: "",
-                pricePerPet: 15000,
-                hasGPSTracker: false,
-                hasDiscount: false,
-                discountPercentage: 0,
-                hasMercadoPago: false,
-                tokenMercadoPago: null,
-                updatedAt: new Date().toISOString()
-            };
+            try {
+                console.log('Intentando obtener configuraciones con /walker/my-settings');
+                const response = await apiClient.get('/walker/my-settings');
+                return response.data.settings || {
+                    location: "",
+                    pricePerPet: 15000,
+                    hasGPSTracker: false,
+                    hasDiscount: false,
+                    discountPercentage: 0,
+                    hasMercadoPago: false,
+                    tokenMercadoPago: null
+                };
+            } catch (fallbackError) {
+                console.error('Error en fallback con my-settings:', fallbackError);
+                return {
+                    location: "",
+                    pricePerPet: 15000,
+                    hasGPSTracker: false,
+                    hasDiscount: false,
+                    discountPercentage: 0,
+                    hasMercadoPago: false,
+                    tokenMercadoPago: null,
+                    updatedAt: new Date().toISOString()
+                };
+            }
         }
     },
 
