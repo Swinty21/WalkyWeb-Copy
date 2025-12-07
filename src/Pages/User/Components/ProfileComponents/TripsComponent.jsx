@@ -29,6 +29,8 @@ const TripsComponent = ({ trips, onCancel, onView, tripsError, tripsLoading }) =
                 return "bg-gray-500/70 text-white";
             case "Rechazado":
                 return "bg-red-500/70 text-white";
+            case "Cancelado":
+                return "bg-red-500/70 text-white";
             default:
                 return "bg-neutral/70 text-black";
         }
@@ -48,6 +50,8 @@ const TripsComponent = ({ trips, onCancel, onView, tripsError, tripsLoading }) =
                 return "Finalizado";
             case "Rechazado":
                 return "Rechazado";
+            case "Cancelado":
+                return "Cancelado";
             default:
                 return status;
         }
@@ -62,7 +66,7 @@ const TripsComponent = ({ trips, onCancel, onView, tripsError, tripsLoading }) =
     };
 
     const canView = (status) => {
-        return ["Agendado", "Activo", "Finalizado"].includes(status);
+        return ["Agendado", "Activo", "Finalizado", "Cancelado"].includes(status);
     };
 
     if (tripsError) {

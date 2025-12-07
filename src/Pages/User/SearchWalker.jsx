@@ -27,10 +27,29 @@ const SearchWalker = () => {
                 
                 const walkersForSearch = walkersData.filter(walker => !walker.isPlaceholder);
                 
-                const uniqueLocations = [...new Set(walkersForSearch.map(walker => walker.location))].filter(Boolean).sort();
+                const walkersWithSettings = await Promise.all(
+                    walkersForSearch.map(async (walker) => {
+                        try {
+                            const settings = await WalkerController.fetchWalkerSettings(walker.id);
+                            return {
+                                ...walker,
+                                hasGPSTracker: settings?.hasGPSTracker || false,
+                                pricePerPet: settings?.pricePerPet || walker.pricePerPet || 15000
+                            };
+                        } catch (err) {
+                            return {
+                                ...walker,
+                                hasGPSTracker: false,
+                                pricePerPet: walker.pricePerPet || 15000
+                            };
+                        }
+                    })
+                );
                 
-                setWalkers(walkersForSearch);
-                setFilteredWalkers(walkersForSearch);
+                const uniqueLocations = [...new Set(walkersWithSettings.map(walker => walker.location))].filter(Boolean).sort();
+                
+                setWalkers(walkersWithSettings);
+                setFilteredWalkers(walkersWithSettings);
                 setAvailableLocations(uniqueLocations);
             } catch (err) {
                 setError('Error al cargar los paseadores');

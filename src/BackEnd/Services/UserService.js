@@ -1,27 +1,53 @@
 import { UserDataAccess } from "../DataAccess/UserDataAccess.js";
+import { SettingsDataAccess } from "../DataAccess/SettingsDataAccess.js";
 
 export const UserService = {
     async getAllUsers() {
         const users = await UserDataAccess.getAllUsers();
         
-        // Transformar a DTO del frontend
-        return users.map(user => ({
-            id: user.id,
-            fullName: user.name,
-            email: user.email.toLowerCase(),
-            role: user.role,
-            profileImage: user.profileImage || "https://cdn.example.com/default-avatar.png",
-            phone: user.phone || "No disponible",
-            location: user.location || "No disponible",
-            suscription: user.suscription || "Basic",
-            status: user.status || "active",
-            joinedDate: user.joinedDate || new Date().toISOString(),
-            lastLogin: user.lastLogin || new Date().toISOString()
-        }));
+        const usersWithSubscriptions = await Promise.all(
+            users.map(async (user) => {
+                let userSubscription = "free";
+                try {
+                    const subscription = await SettingsDataAccess.getUserSubscription(user.id);
+                    if (subscription && subscription.plan) {
+                        userSubscription = subscription.plan;
+                    }
+                } catch (error) {
+                    console.error(`Error obteniendo suscripción para usuario ${user.id}:`, error);
+                }
+                
+                return {
+                    id: user.id,
+                    fullName: user.name,
+                    email: user.email.toLowerCase(),
+                    role: user.role,
+                    profileImage: user.profileImage || "https://cdn.example.com/default-avatar.png",
+                    phone: user.phone || "No disponible",
+                    location: user.location || "No disponible",
+                    suscription: userSubscription,
+                    status: user.status || "active",
+                    joinedDate: user.joinedDate || new Date().toISOString().slice(0, 19).replace('T', ' '),
+                    lastLogin: user.lastLogin || new Date().toISOString().slice(0, 19).replace('T', ' ')
+                };
+            })
+        );
+        
+        return usersWithSubscriptions;
     },
 
     async getUserById(id) {
         const user = await UserDataAccess.getUserById(id);
+        
+        let userSubscription = "free";
+        try {
+            const subscription = await SettingsDataAccess.getUserSubscription(id);
+            if (subscription && subscription.plan) {
+                userSubscription = subscription.plan;
+            }
+        } catch (error) {
+            console.error(`Error obteniendo suscripción para usuario ${id}:`, error);
+        }
         
         return {
             id: user.id,
@@ -31,10 +57,10 @@ export const UserService = {
             profileImage: user.profileImage || "https://cdn.example.com/default-avatar.png",
             phone: user.phone || "No disponible",
             location: user.location || "No disponible",
-            suscription: user.suscription || "Basic",
+            suscription: userSubscription,
             status: user.status || "active",
-            joinedDate: user.joinedDate || new Date().toISOString(),
-            lastLogin: user.lastLogin || new Date().toISOString()
+            joinedDate: user.joinedDate || new Date().toISOString().slice(0, 19).replace('T', ' '),
+            lastLogin: user.lastLogin || new Date().toISOString().slice(0, 19).replace('T', ' ')
         };
     },
 
@@ -56,7 +82,16 @@ export const UserService = {
 
         const updatedUser = await UserDataAccess.updateUser(id, userData);
 
-        // Transformar respuesta al DTO del frontend
+        let userSubscription = "free";
+        try {
+            const subscription = await SettingsDataAccess.getUserSubscription(id);
+            if (subscription && subscription.plan) {
+                userSubscription = subscription.plan;
+            }
+        } catch (error) {
+            console.error(`Error obteniendo suscripción para usuario ${id}:`, error);
+        }
+
         return {
             id: updatedUser.id,
             fullName: updatedUser.name,
@@ -65,10 +100,10 @@ export const UserService = {
             profileImage: updatedUser.profileImage || "https://cdn.example.com/default-avatar.png",
             phone: updatedUser.phone || "No disponible",
             location: updatedUser.location || "No disponible",
-            suscription: updatedUser.suscription || "Basic",
+            suscription: userSubscription,
             status: updatedUser.status || "active",
-            joinedDate: updatedUser.joinedDate || new Date().toISOString(),
-            lastLogin: updatedUser.lastLogin || new Date().toISOString()
+            joinedDate: updatedUser.joinedDate || new Date().toISOString().slice(0, 19).replace('T', ' '),
+            lastLogin: updatedUser.lastLogin || new Date().toISOString().slice(0, 19).replace('T', ' ')
         };
     },
 
@@ -105,6 +140,16 @@ export const UserService = {
 
         const updatedUser = await UserDataAccess.updateUserByAdmin(id, allowedFields);
 
+        let userSubscription = "free";
+        try {
+            const subscription = await SettingsDataAccess.getUserSubscription(id);
+            if (subscription && subscription.plan) {
+                userSubscription = subscription.plan;
+            }
+        } catch (error) {
+            console.error(`Error obteniendo suscripción para usuario ${id}:`, error);
+        }
+
         return {
             id: updatedUser.id,
             fullName: updatedUser.name,
@@ -113,10 +158,10 @@ export const UserService = {
             profileImage: updatedUser.profileImage || "https://cdn.example.com/default-avatar.png",
             phone: updatedUser.phone || "No disponible",
             location: updatedUser.location || "No disponible",
-            suscription: updatedUser.suscription || "Basic",
+            suscription: userSubscription,
             status: updatedUser.status || "active",
-            joinedDate: updatedUser.joinedDate || new Date().toISOString(),
-            lastLogin: updatedUser.lastLogin || new Date().toISOString()
+            joinedDate: updatedUser.joinedDate || new Date().toISOString().slice(0, 19).replace('T', ' '),
+            lastLogin: updatedUser.lastLogin || new Date().toISOString().slice(0, 19).replace('T', ' ')
         };
     },
 

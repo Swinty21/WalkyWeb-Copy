@@ -1,8 +1,8 @@
 import apiClient from '../ApiClient.js';
+import { SettingsAPI } from './SettingsAPI.js';
 
 export const AuthAPI = {
     async login(credentials) {
-        console.log("Simulando llamada API login:", credentials);
         
         try {
             const response = await apiClient.post('/auth/login', {
@@ -16,6 +16,16 @@ export const AuthAPI = {
                 apiClient.setToken(userData.token);
             }
 
+            let userSubscription = 'free';
+            try {
+                const subscription = await SettingsAPI.getUserSubscription(userData.id);
+                if (subscription && subscription.plan) {
+                    userSubscription = subscription.plan;
+                }
+            } catch (error) {
+                console.error(`Error obteniendo suscripción en login:`, error);
+            }
+
             return {
                 id: userData.id,
                 name: userData.name,
@@ -23,7 +33,7 @@ export const AuthAPI = {
                 password: credentials.password,
                 role: userData.role,
                 profileImage: userData.profileImage || userData.profile_image,
-                suscription: userData.suscription || userData.subscription || 'Basic',
+                suscription: userSubscription,
                 phone: userData.phone || "",
                 location: userData.location || "",
                 joinedDate: userData.joinedDate || userData.joined_date,
@@ -32,13 +42,11 @@ export const AuthAPI = {
                 token: userData.token
             };
         } catch (error) {
-            console.error("Error en login:", error);
             throw new Error("Credenciales inválidas o cuenta inactiva");
         }
     },
 
     async register(data) {
-        console.log("Simulando llamada API register:", data);
         
         try {
             const response = await apiClient.post('/auth/register', {
@@ -56,6 +64,16 @@ export const AuthAPI = {
                 apiClient.setToken(userData.token);
             }
 
+            let userSubscription = 'free';
+            try {
+                const subscription = await SettingsAPI.getUserSubscription(userData.id);
+                if (subscription && subscription.plan) {
+                    userSubscription = subscription.plan;
+                }
+            } catch (error) {
+                console.error(`Error obteniendo suscripción en register:`, error);
+            }
+
             return {
                 id: userData.id,
                 name: userData.name,
@@ -63,7 +81,7 @@ export const AuthAPI = {
                 password: data.password,
                 role: userData.role,
                 profileImage: userData.profileImage || userData.profile_image || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
-                suscription: "Basic",
+                suscription: userSubscription,
                 phone: userData.phone || "",
                 location: userData.location || "",
                 joinedDate: userData.joinedDate || userData.joined_date,
@@ -72,7 +90,6 @@ export const AuthAPI = {
                 token: userData.token
             };
         } catch (error) {
-            console.error("Error en register:", error);
             if (error.message.includes('email ya está registrado')) {
                 throw new Error("El email ya está registrado");
             }
@@ -81,7 +98,6 @@ export const AuthAPI = {
     },
 
     async checkSession(token) {
-        console.log("Simulando verificación de sesión con token:", token);
         
         try {
             const response = await apiClient.post('/auth/check-session', null, {
@@ -96,13 +112,23 @@ export const AuthAPI = {
                 apiClient.setToken(userData.token);
             }
 
+            let userSubscription = 'free';
+            try {
+                const subscription = await SettingsAPI.getUserSubscription(userData.id);
+                if (subscription && subscription.plan) {
+                    userSubscription = subscription.plan;
+                }
+            } catch (error) {
+                console.error(`Error obteniendo suscripción en checkSession:`, error);
+            }
+
             return {
                 id: userData.id,
                 name: userData.name,
                 email: userData.email,
                 role: userData.role,
                 profileImage: userData.profileImage || userData.profile_image,
-                suscription: userData.suscription || userData.subscription || 'Basic',
+                suscription: userSubscription,
                 phone: userData.phone || "",
                 location: userData.location || "",
                 joinedDate: userData.joinedDate || userData.joined_date,
@@ -111,7 +137,6 @@ export const AuthAPI = {
                 token: userData.token || token
             };
         } catch (error) {
-            console.error("Error en checkSession:", error);
             apiClient.removeToken();
             throw new Error("Sesión inválida o expirada");
         }
@@ -136,19 +161,35 @@ export const AuthAPI = {
         try {
             const response = await apiClient.get('/users');
             
-            return response.data.users.map(user => ({
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                profileImage: user.profileImage || user.profile_image,
-                suscription: user.suscription || user.subscription || 'Basic',
-                phone: user.phone || "",
-                location: user.location || "",
-                joinedDate: user.joinedDate || user.joined_date,
-                status: user.status,
-                lastLogin: user.lastLogin || user.last_login
-            }));
+            const usersWithSubscriptions = await Promise.all(
+                response.data.users.map(async (user) => {
+                    let userSubscription = 'free';
+                    try {
+                        const subscription = await SettingsAPI.getUserSubscription(user.id);
+                        if (subscription && subscription.plan) {
+                            userSubscription = subscription.plan;
+                        }
+                    } catch (error) {
+                        console.error(`Error obteniendo suscripción para usuario ${user.id}:`, error);
+                    }
+                    
+                    return {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                        profileImage: user.profileImage || user.profile_image,
+                        suscription: userSubscription,
+                        phone: user.phone || "",
+                        location: user.location || "",
+                        joinedDate: user.joinedDate || user.joined_date,
+                        status: user.status,
+                        lastLogin: user.lastLogin || user.last_login
+                    };
+                })
+            );
+            
+            return usersWithSubscriptions;
         } catch (error) {
             console.error("Error obteniendo usuarios:", error);
             throw new Error(error.message || 'Error al obtener usuarios');
@@ -165,13 +206,23 @@ export const AuthAPI = {
 
             const updatedUser = response.data.user;
             
+            let userSubscription = 'free';
+            try {
+                const subscription = await SettingsAPI.getUserSubscription(id);
+                if (subscription && subscription.plan) {
+                    userSubscription = subscription.plan;
+                }
+            } catch (error) {
+                console.error(`Error obteniendo suscripción para usuario ${id}:`, error);
+            }
+            
             return {
                 id: updatedUser.id,
                 name: updatedUser.name,
                 email: updatedUser.email,
                 role: updatedUser.role,
                 profileImage: updatedUser.profileImage || updatedUser.profile_image,
-                suscription: updatedUser.suscription || updatedUser.subscription || 'Basic',
+                suscription: userSubscription,
                 phone: updatedUser.phone || "",
                 location: updatedUser.location || "",
                 joinedDate: updatedUser.joinedDate || updatedUser.joined_date,
@@ -204,13 +255,23 @@ export const AuthAPI = {
 
             const updatedUser = response.data.user;
             
+            let userSubscription = 'free';
+            try {
+                const subscription = await SettingsAPI.getUserSubscription(id);
+                if (subscription && subscription.plan) {
+                    userSubscription = subscription.plan;
+                }
+            } catch (error) {
+                console.error(`Error obteniendo suscripción para usuario ${id}:`, error);
+            }
+            
             return {
                 id: updatedUser.id,
                 name: updatedUser.name,
                 email: updatedUser.email,
                 role: updatedUser.role,
                 profileImage: updatedUser.profileImage || updatedUser.profile_image,
-                suscription: updatedUser.suscription || updatedUser.subscription || 'Basic',
+                suscription: userSubscription,
                 phone: updatedUser.phone || "",
                 location: updatedUser.location || "",
                 joinedDate: updatedUser.joinedDate || updatedUser.joined_date,

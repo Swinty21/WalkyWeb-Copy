@@ -39,6 +39,22 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
         }
     };
 
+    const randomPlanConfigs = [
+        { icon: FaCrown, color: 'from-blue-400 to-blue-600', popular: false },
+        { icon: MdDiamond, color: 'from-pink-400 to-pink-600', popular: false },
+        { icon: FaStar, color: 'from-indigo-400 to-indigo-600', popular: false },
+        { icon: FaCrown, color: 'from-red-400 to-red-600', popular: false },
+        { icon: MdDiamond, color: 'from-teal-400 to-teal-600', popular: false },
+        { icon: FaStar, color: 'from-orange-400 to-orange-600', popular: false },
+        { icon: FaCrown, color: 'from-cyan-400 to-cyan-600', popular: false },
+        { icon: MdDiamond, color: 'from-lime-400 to-lime-600', popular: false }
+    ];
+
+    const getRandomPlanConfig = (planId) => {
+        const randomIndex = Math.abs(planId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)) % randomPlanConfigs.length;
+        return randomPlanConfigs[randomIndex];
+    };
+
     useEffect(() => {
         if (isOpen) {
             loadPlans();
@@ -52,10 +68,9 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
             
             const plansWithConfig = subscriptionPlans.map(plan => ({
                 ...plan,
-                ...planConfig[plan.plan_id || plan.id],
+                ...planConfig[plan.plan_id || plan.id] || getRandomPlanConfig(plan.plan_id || plan.id),
                 
                 features: Array.isArray(plan.features) ? plan.features : [],
-                
                 maxWalks: plan.max_walks,
                 supportLevel: plan.support_level,
                 cancellationPolicy: plan.cancellation_policy,
@@ -104,7 +119,7 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
             setSelectedPlan(planId);
             
             const result = await SettingsController.updateSubscription(user?.id, planId);
-            onSubscriptionUpdate(result);
+            onSubscriptionUpdate(result, currentSubscription?.plan);
             
             onClose();
             setSelectedPlan(null);

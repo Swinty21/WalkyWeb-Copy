@@ -1,5 +1,6 @@
 import { AuthAPI } from './AuthAPI.js';
 import apiClient from '../ApiClient.js';
+import { SettingsAPI } from './SettingsAPI.js';
 
 export const UserAPI = {
     async getAllUsers() {
@@ -14,13 +15,23 @@ export const UserAPI = {
             const response = await apiClient.get(`/users/${id}`);
             const user = response.data.user;
             
+            let userSubscription = 'free';
+            try {
+                const subscription = await SettingsAPI.getUserSubscription(id);
+                if (subscription && subscription.plan) {
+                    userSubscription = subscription.plan;
+                }
+            } catch (error) {
+                console.error(`Error obteniendo suscripción para usuario ${id}:`, error);
+            }
+            
             return {
                 id: user.id,
                 name: user.name,
                 email: user.email,
                 role: user.role,
                 profileImage: user.profileImage || user.profile_image,
-                suscription: user.suscription || user.subscription || 'Basic',
+                suscription: userSubscription,
                 phone: user.phone || "",
                 location: user.location || "",
                 joinedDate: user.joinedDate || user.joined_date,
