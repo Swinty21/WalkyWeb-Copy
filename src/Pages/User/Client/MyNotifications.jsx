@@ -8,20 +8,26 @@ import { FiBell, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 const MyNotifications = () => {
     const [search, setSearch] = useState("");
-    const [notifications, setNotifications] = useState([]);
+    const [typeFilter, setTypeFilter] = useState("all");
+    const [readFilter, setReadFilter] = useState("all");
+    const [timeFilter, setTimeFilter] = useState("all");
+    const [allNotifications, setAllNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [errorState, seterrorState] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalCount, setTotalCount] = useState(0);
-    const [hasNextPage, setHasNextPage] = useState(false);
-    const [hasPrevPage, setHasPrevPage] = useState(false);
     const {error, info } = useToast();
 
     const ITEMS_PER_PAGE = 10;
     const user = useUser();
     
-    const loadNotifications = useCallback(async (page = 1, searchTerm = "") => {
+    const normalizeReadValue = (value) => {
+        if (typeof value === 'boolean') return value;
+        if (typeof value === 'string') return value.toLowerCase() === 'true' || value === '1';
+        if (typeof value === 'number') return value === 1;
+        return false;
+    };
+
+    const loadAllNotifications = useCallback(async () => {
         try {
             setLoading(true);
             seterrorState(null);
@@ -34,20 +40,20 @@ const MyNotifications = () => {
             
             const response = await NotificationController.fetchNotifications(
                 user.id,
-                page, 
-                ITEMS_PER_PAGE, 
-                searchTerm
+                1, 
+                9999,
+                ""
             );
             
-            setNotifications(response.notifications);
-            setCurrentPage(response.currentPage);
-            setTotalPages(response.totalPages);
-            setTotalCount(response.totalCount);
-            setHasNextPage(response.hasNextPage);
-            setHasPrevPage(response.hasPrevPage);
+            const normalizedNotifications = (response.notifications || []).map(notif => ({
+                ...notif,
+                read: normalizeReadValue(notif.read)
+            }));
+            
+            setAllNotifications(normalizedNotifications);
             
         } catch (err) {
-            seterrorState('Error al cargar las notificaciones: ');
+            seterrorState('Error al cargar las notificaciones');
         } finally {
             setLoading(false);
         }
@@ -55,14 +61,74 @@ const MyNotifications = () => {
 
     useEffect(() => {
         if (user?.id) { 
-            loadNotifications(1, search);
-            setCurrentPage(1);
+            loadAllNotifications();
         }
-    }, [search, loadNotifications, user?.id]);
+    }, [user?.id, loadAllNotifications]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, typeFilter, readFilter, timeFilter]);
+
+    const filterNotifications = (notifications) => {
+        let filtered = [...notifications];
+
+        if (search) {
+            const searchLower = search.toLowerCase();
+            filtered = filtered.filter(notif => 
+                notif.title?.toLowerCase().includes(searchLower) ||
+                notif.preview?.toLowerCase().includes(searchLower) ||
+                notif.fullContent?.toLowerCase().includes(searchLower) ||
+                notif.walkerName?.toLowerCase().includes(searchLower)
+            );
+        }
+
+        if (typeFilter !== 'all') {
+            filtered = filtered.filter(notif => notif.type === typeFilter);
+        }
+
+        if (readFilter === 'read') {
+            filtered = filtered.filter(notif => notif.read === true);
+        } else if (readFilter === 'unread') {
+            filtered = filtered.filter(notif => notif.read === false);
+        }
+
+        if (timeFilter !== 'all') {
+            const now = new Date();
+            filtered = filtered.filter(notif => {
+                const notifDate = new Date(notif.date);
+                const diffTime = now - notifDate;
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+                switch (timeFilter) {
+                    case 'today':
+                        return diffDays < 1;
+                    case 'week':
+                        return diffDays < 7;
+                    case 'month':
+                        return diffDays < 30;
+                    case '3months':
+                        return diffDays < 90;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        return filtered;
+    };
+
+    const filteredNotifications = filterNotifications(allNotifications);
+
+    const totalFiltered = filteredNotifications.length;
+    const totalPages = Math.ceil(totalFiltered / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const paginatedNotifications = filteredNotifications.slice(startIndex, endIndex);
+    const hasNextPage = currentPage < totalPages;
+    const hasPrevPage = currentPage > 1;
 
     const handleMarkAsRead = async (notificationId) => {
         try {
-            
             if (!user?.id) {
                 return;
             }
@@ -71,8 +137,9 @@ const MyNotifications = () => {
             info('Notificación Leída', {
                 title: 'Info',
                 duration: 4000
-            })
-            setNotifications(prevNotifications => 
+            });
+            
+            setAllNotifications(prevNotifications => 
                 prevNotifications.map(notification =>
                     notification.id === notificationId
                         ? { ...notification, read: true }
@@ -83,19 +150,21 @@ const MyNotifications = () => {
             error('Error al marcar como leída la notificacion', {
                 title: 'Error',
                 duration: 4000
-            })
-            seterrorState('errorState al marcar la notificación como leída: ' + err.message);
+            });
+            seterrorState('Error al marcar la notificación como leída: ' + err.message);
         }
     };
 
     const clearFilters = () => {
         setSearch("");
+        setTypeFilter("all");
+        setReadFilter("all");
+        setTimeFilter("all");
     };
 
     const handlePageChange = (newPage) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
-            loadNotifications(newPage, search);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
@@ -205,7 +274,7 @@ const MyNotifications = () => {
         );
     }
 
-    if (loading && notifications?.length === 0) {
+    if (loading && allNotifications?.length === 0) {
         return (
             <div className="min-h-screen bg-background dark:bg-foreground p-4 md:p-8">
                 <div className="max-w-4xl mx-auto">
@@ -231,7 +300,7 @@ const MyNotifications = () => {
                             <FiBell className="w-12 h-12 text-red-500 mx-auto" />
                             <p className="text-lg text-red-500">{errorState}</p>
                             <button 
-                                onClick={() => loadNotifications(1, search)}
+                                onClick={loadAllNotifications}
                                 className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors duration-200"
                                 disabled={!user?.id}
                             >
@@ -252,27 +321,24 @@ const MyNotifications = () => {
                     search={search}
                     setSearch={setSearch}
                     clearFilters={clearFilters}
-                    totalCount={totalCount}
+                    totalCount={totalFiltered}
+                    typeFilter={typeFilter}
+                    setTypeFilter={setTypeFilter}
+                    readFilter={readFilter}
+                    setReadFilter={setReadFilter}
+                    timeFilter={timeFilter}
+                    setTimeFilter={setTimeFilter}
                 />
 
-                {loading && notifications?.length > 0 && (
-                    <div className="text-center py-4">
-                        <div className="inline-flex items-center space-x-2 text-primary">
-                            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                            <span>Cargando...</span>
-                        </div>
-                    </div>
-                )}
-
-                {notifications?.length === 0 && !loading ? (
+                {paginatedNotifications?.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="text-6xl mb-4">🔔</div>
                         <h3 className="text-xl font-bold text-foreground dark:text-background mb-2">
                             No se encontraron notificaciones
                         </h3>
                         <p className="text-accent dark:text-muted">
-                            {search 
-                                ? "Intenta ajustar tu búsqueda" 
+                            {search || typeFilter !== 'all' || readFilter !== 'all' || timeFilter !== 'all'
+                                ? "Intenta ajustar tus filtros" 
                                 : "No tienes notificaciones en este momento"
                             }
                         </p>
@@ -280,7 +346,7 @@ const MyNotifications = () => {
                 ) : (
                     <>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-                            {notifications?.map((notification) => (
+                            {paginatedNotifications?.map((notification) => (
                                 <NotificationCard
                                     key={notification.id}
                                     notification={notification}
@@ -291,9 +357,9 @@ const MyNotifications = () => {
 
                         <PaginationControls />
 
-                        {totalCount > 0 && (
+                        {totalFiltered > 0 && (
                             <div className="text-center text-sm text-accent dark:text-muted">
-                                Mostrando {Math.min((currentPage - 1) * ITEMS_PER_PAGE + 1, totalCount)} - {Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} de {totalCount} notificaciones
+                                Mostrando {startIndex + 1}-{Math.min(endIndex, totalFiltered)} de {totalFiltered} notificaciones
                             </div>
                         )}
                     </>

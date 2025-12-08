@@ -4,20 +4,32 @@ import { format } from "date-fns";
 
 const PaymentProcessModal = ({ isOpen, onClose, tripData, totalAmount }) => {
     const [paymentStatus, setPaymentStatus] = useState('processing');
+    const [currentStep, setCurrentStep] = useState(0);
 
     useEffect(() => {
         if (isOpen && paymentStatus === 'processing') {
-            const timer = setTimeout(() => {
-                setPaymentStatus('success');
-            }, 3000);
+            const steps = [
+                { delay: 3000, step: 1 },
+                { delay: 6000, step: 2 },
+                { delay: 9000, step: 3 },
+                { delay: 12000, status: 'success' }
+            ];
 
-            return () => clearTimeout(timer);
+            const timers = steps.map(({ delay, step, status }) =>
+                setTimeout(() => {
+                    if (step) setCurrentStep(step);
+                    if (status) setPaymentStatus(status);
+                }, delay)
+            );
+
+            return () => timers.forEach(timer => clearTimeout(timer));
         }
     }, [isOpen, paymentStatus]);
 
     useEffect(() => {
         if (isOpen) {
             setPaymentStatus('processing');
+            setCurrentStep(0);
         }
     }, [isOpen]);
 
@@ -43,16 +55,46 @@ const PaymentProcessModal = ({ isOpen, onClose, tripData, totalAmount }) => {
 
                         <div className="space-y-4 mb-8">
                             <div className="flex items-center space-x-3">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                                <span className="text-foreground dark:text-background">Verificando información</span>
+                                {currentStep >= 1 ? (
+                                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                        <FiCheck className="text-white text-sm" />
+                                    </div>
+                                ) : (
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                )}
+                                <span className={`transition-colors duration-300 ${currentStep >= 1 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-foreground dark:text-background'}`}>
+                                    Verificando información
+                                </span>
                             </div>
+                            
                             <div className="flex items-center space-x-3">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                                <span className="text-foreground dark:text-background">Procesando transacción</span>
+                                {currentStep >= 2 ? (
+                                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                        <FiCheck className="text-white text-sm" />
+                                    </div>
+                                ) : currentStep >= 1 ? (
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                ) : (
+                                    <div className="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
+                                )}
+                                <span className={`transition-colors duration-300 ${currentStep >= 2 ? 'text-green-600 dark:text-green-400 font-semibold' : currentStep >= 1 ? 'text-foreground dark:text-background' : 'text-gray-400 dark:text-gray-600'}`}>
+                                    Procesando transacción
+                                </span>
                             </div>
+                            
                             <div className="flex items-center space-x-3">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                                <span className="text-foreground dark:text-background">Confirmando pago</span>
+                                {currentStep >= 3 ? (
+                                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                                        <FiCheck className="text-white text-sm" />
+                                    </div>
+                                ) : currentStep >= 2 ? (
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                ) : (
+                                    <div className="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600"></div>
+                                )}
+                                <span className={`transition-colors duration-300 ${currentStep >= 3 ? 'text-green-600 dark:text-green-400 font-semibold' : currentStep >= 2 ? 'text-foreground dark:text-background' : 'text-gray-400 dark:text-gray-600'}`}>
+                                    Confirmando pago
+                                </span>
                             </div>
                         </div>
 
@@ -86,7 +128,7 @@ const PaymentProcessModal = ({ isOpen, onClose, tripData, totalAmount }) => {
                                 <div className="flex justify-between items-center">
                                     <span className="text-sm text-accent dark:text-muted">Monto Pagado:</span>
                                     <span className="font-bold text-lg text-green-600 dark:text-green-400">
-                                        ${totalAmount?.toLocaleString()}
+                                        ${Math.round(totalAmount || 0).toLocaleString()}
                                     </span>
                                 </div>
                                 

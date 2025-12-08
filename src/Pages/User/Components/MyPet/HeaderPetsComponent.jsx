@@ -8,10 +8,10 @@ const HeaderPetsComponent = ({
 }) => {
     const totalPets = pets.length;
     const averageWeight = totalPets > 0 
-        ? Math.round(pets.reduce((acc, pet) => acc + (pet.weight || 0), 0) / totalPets * 10) / 10
+        ? (pets.reduce((acc, pet) => acc + (parseFloat(pet.weight) || 0), 0) / totalPets).toFixed(1)
         : 0;
     const averageAge = totalPets > 0 
-        ? Math.round(pets.reduce((acc, pet) => acc + (pet.age || 0), 0) / totalPets * 10) / 10
+        ? (pets.reduce((acc, pet) => acc + (parseFloat(pet.age) || 0), 0) / totalPets).toFixed(1)
         : 0;
 
     return (

@@ -233,7 +233,7 @@ const Home = ({ navigateToContent }) => {
                 isOpen={showPaymentProcessModal}
                 onClose={handleClosePaymentProcessModal}
                 tripData={tripToPay}
-                totalAmount={tripToPay?.totalPrice ? tripToPay.totalPrice + Math.round(tripToPay.totalPrice * 0.035) : 0}
+                totalAmount={tripToPay?.totalPrice || 0}
             />
         </div>
     );

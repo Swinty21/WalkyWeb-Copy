@@ -213,18 +213,21 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 {plans.map((plan) => {
                                     const IconComponent = plan.icon || FaStar;
-                                    const isCurrentPlan = currentSubscription?.plan === (plan.plan_id || plan.id);
-                                    const isSelected = selectedPlan === (plan.plan_id || plan.id);
                                     const planId = plan.plan_id || plan.id;
-                                    
+                                    const isCurrentPlan = currentSubscription?.plan === planId;
+                                    const isExpiredPlan = isCurrentPlan && isExpired(currentSubscription?.expiryDate);
+                                    const isSelected = selectedPlan === planId;
+                                                                        
                                     return (
                                         <div
                                             key={planId}
                                             className={`relative rounded-2xl border-2 transition-all duration-300 ${
                                                 plan.popular
                                                     ? 'border-primary shadow-lg shadow-primary/20 scale-105'
-                                                    : isCurrentPlan
+                                                    : isCurrentPlan && !isExpiredPlan
                                                     ? 'border-success shadow-lg'
+                                                    : isExpiredPlan
+                                                    ? 'border-orange-500 shadow-lg'
                                                     : 'border-border dark:border-muted hover:border-primary/50'
                                             } ${isSelected ? 'ring-4 ring-primary/30' : ''}`}
                                         >
@@ -236,10 +239,18 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
                                                 </div>
                                             )}
 
-                                            {isCurrentPlan && (
+                                            {isCurrentPlan && !isExpiredPlan && (
                                                 <div className="absolute -top-3 right-4">
                                                     <div className="bg-success text-black px-3 py-1 rounded-full text-xs font-bold">
                                                         ACTUAL
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {isExpiredPlan && (
+                                                <div className="absolute -top-3 right-4">
+                                                    <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold">
+                                                        VENCIDO
                                                     </div>
                                                 </div>
                                             )}
@@ -317,12 +328,14 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
 
                                                 <button
                                                     onClick={() => handlePlanSelect(planId)}
-                                                    disabled={loading || isCurrentPlan}
+                                                    disabled={loading || (isCurrentPlan && !isExpiredPlan)}
                                                     className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-300 ${
-                                                        isCurrentPlan
+                                                        isCurrentPlan && !isExpiredPlan
                                                             ? 'bg-success/20 text-success cursor-not-allowed'
                                                             : isSelected
                                                             ? 'bg-primary text-white'
+                                                            : isExpiredPlan
+                                                            ? 'bg-orange-500 text-white hover:bg-orange-600'
                                                             : plan.popular
                                                             ? 'bg-primary text-white hover:bg-primary/90'
                                                             : 'bg-background dark:bg-foreground border border-primary text-primary hover:bg-primary hover:text-white'
@@ -333,8 +346,10 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
                                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                                             <span>Procesando...</span>
                                                         </div>
-                                                    ) : isCurrentPlan ? (
+                                                    ) : isCurrentPlan && !isExpiredPlan ? (
                                                         'Plan Actual'
+                                                    ) : isExpiredPlan ? (
+                                                        'Renovar Plan'
                                                     ) : planId === 'free' ? (
                                                         'Cambiar a Gratuito'
                                                     ) : (

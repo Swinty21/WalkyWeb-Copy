@@ -49,6 +49,10 @@ const ReceiptModal = ({ isOpen, onClose, receipt, loading }) => {
         return receipt.createdAt;
     };
 
+    const formatCurrency = (value) => {
+        return Math.round(parseFloat(value) || 0).toLocaleString();
+    };
+
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
             <div className="bg-background dark:bg-foreground rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -88,7 +92,7 @@ const ReceiptModal = ({ isOpen, onClose, receipt, loading }) => {
                             <div>
                                 <p className="text-xs text-accent dark:text-muted">Monto Pagado</p>
                                 <p className="text-lg font-bold text-primary">
-                                    ${parseFloat(receipt.amountPaid || 0).toLocaleString()}
+                                    ${formatCurrency(receipt.amountPaid)}
                                 </p>
                             </div>
                             <div>
@@ -174,7 +178,7 @@ const ReceiptModal = ({ isOpen, onClose, receipt, loading }) => {
                                         <div>
                                             <p className="text-xs text-accent dark:text-muted">Precio Base</p>
                                             <p className="text-sm font-semibold text-foreground dark:text-background">
-                                                ${parseFloat(receipt.walk.walkPrice || 0).toLocaleString()}
+                                                ${formatCurrency(receipt.walk.walkPrice)}
                                             </p>
                                         </div>
                                         <div>

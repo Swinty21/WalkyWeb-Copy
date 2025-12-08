@@ -20,9 +20,7 @@ const PaymentModal = ({ isOpen, onClose, onConfirm, tripData, isLoading }) => {
             `${distance} m`;
     };
 
-    const totalPrice = tripData?.totalPrice || 0;
-    const mercadoPagoFee = Math.round(totalPrice * 0.035); 
-    const finalTotal = totalPrice + mercadoPagoFee;
+    const totalPrice = Math.round(tripData?.totalPrice || 0);
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -121,21 +119,13 @@ const PaymentModal = ({ isOpen, onClose, onConfirm, tripData, isLoading }) => {
                         <div className="flex items-center mb-3">
                             <FiDollarSign className="text-orange-600 mr-2" size={18} />
                             <h4 className="text-lg font-bold text-orange-800 dark:text-orange-200">
-                                Resumen de Pago
+                                Total a Pagar
                             </h4>
                         </div>
                         
-                        <div className="space-y-2">
-                            <div className="flex justify-between items-center">
-                                <span className="text-sm text-foreground dark:text-background">Servicio de paseo:</span>
-                                <span className="font-semibold text-foreground dark:text-background">${totalPrice.toLocaleString()}</span>
-                            </div>
-                            <div className="border-t border-orange-200 dark:border-orange-700 pt-2 mt-2">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-lg font-bold text-orange-800 dark:text-orange-200">Total a Pagar:</span>
-                                    <span className="text-xl font-bold text-orange-600 dark:text-orange-400">${finalTotal.toLocaleString()}</span>
-                                </div>
-                            </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-foreground dark:text-background">Servicio de paseo:</span>
+                            <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">${totalPrice.toLocaleString()}</span>
                         </div>
                     </div>
 
