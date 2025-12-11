@@ -143,9 +143,6 @@ const Settings = () => {
 
     const handleSubscriptionUpdate = (newSubscription, oldPlan) => {
         setSubscription(newSubscription);
-        setPreviousPlan(oldPlan);
-        closeSubscriptionModal();
-        setShowSuccessModal(true);
     };
 
     const closeSuccessModal = () => {

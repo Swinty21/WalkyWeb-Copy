@@ -3,6 +3,9 @@ import { FaTimes, FaCrown, FaCheck, FaStar, FaInfoCircle, FaExclamationTriangle 
 import { MdDiamond } from 'react-icons/md';
 import { SettingsController } from '../../../../BackEnd/Controllers/SettingsController';
 import { useUser } from '../../../../BackEnd/Context/UserContext';
+import SubscriptionConfirmModal from './SubscriptionConfirmModal';
+import SubscriptionPaymentProcessModal from './SubscriptionPaymentProcessModal';
+import SubscriptionSuccessModal from './SubscriptionSuccessModal';
 
 const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptionUpdate }) => {
     const user = useUser();
@@ -10,6 +13,13 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [plans, setPlans] = useState([]);
     const [plansLoading, setPlansLoading] = useState(true);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [planToConfirm, setPlanToConfirm] = useState(null);
+    const [showPaymentProcessModal, setShowPaymentProcessModal] = useState(false);
+    const [processingPlan, setProcessingPlan] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [previousPlan, setPreviousPlan] = useState(null);
+    const [paymentInfo, setPaymentInfo] = useState(null);
 
     const planConfig = {
         free: {
@@ -69,7 +79,6 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
             const plansWithConfig = subscriptionPlans.map(plan => ({
                 ...plan,
                 ...planConfig[plan.plan_id || plan.id] || getRandomPlanConfig(plan.plan_id || plan.id),
-                
                 features: Array.isArray(plan.features) ? plan.features : [],
                 maxWalks: plan.max_walks,
                 supportLevel: plan.support_level,
@@ -83,6 +92,70 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
         } finally {
             setPlansLoading(false);
         }
+    };
+
+    const calculateFinalPrice = (plan) => {
+        const basePrice = parseFloat(plan?.price) || 0;
+        const discountPercentage = parseFloat(plan?.discount_percentage) || 0;
+        const discountAmount = (basePrice * discountPercentage) / 100;
+        const finalPrice = basePrice - discountAmount;
+        return finalPrice;
+    };
+
+    const calculatePaymentInfo = (selectedPlan, currentSub) => {
+        const currentPlan = plans?.find(p => (p.plan_id || p.id) === currentSub?.plan);
+        const currentPlanPrice = parseFloat(currentPlan?.price) || 0;
+        const selectedPlanPrice = calculateFinalPrice(selectedPlan);
+        
+        const isExpired = currentSub?.expiryDate && new Date(currentSub.expiryDate) < new Date();
+        const isCurrentPlan = currentSub?.plan === (selectedPlan?.plan_id || selectedPlan?.id);
+        const isFree = (selectedPlan?.plan_id || selectedPlan?.id) === 'free';
+        const isRenewal = isCurrentPlan && isExpired;
+        
+        const isUpgrade = selectedPlanPrice > currentPlanPrice && !isRenewal && !isFree;
+        const isDowngrade = selectedPlanPrice < currentPlanPrice && currentSub?.plan !== 'free' && !isRenewal && !isFree;
+        
+        const priceDifference = Math.abs(selectedPlanPrice - currentPlanPrice);
+
+        let paymentType = 'new';
+        let amountToPay = selectedPlanPrice;
+        let hasCredit = false;
+        let creditAmount = 0;
+
+        if (isFree) {
+            paymentType = 'free';
+            amountToPay = 0;
+        } else if (isRenewal) {
+            paymentType = 'renewal';
+            amountToPay = selectedPlanPrice;
+        } else if (isUpgrade) {
+            paymentType = 'upgrade';
+            amountToPay = priceDifference;
+        } else if (isDowngrade) {
+            if (isExpired) {
+                paymentType = 'downgrade_expired';
+                amountToPay = selectedPlanPrice;
+            } else {
+                paymentType = 'downgrade_active';
+                amountToPay = 0;
+                hasCredit = true;
+                creditAmount = priceDifference;
+            }
+        } else if (currentSub?.plan === 'free' || !currentSub) {
+            paymentType = 'new';
+            amountToPay = selectedPlanPrice;
+        }
+
+        return {
+            paymentType,
+            amountToPay,
+            hasCredit,
+            creditAmount,
+            originalPrice: parseFloat(selectedPlan?.price) || 0,
+            discountPercentage: parseFloat(selectedPlan?.discount_percentage) || 0,
+            discountAmount: (parseFloat(selectedPlan?.price) || 0) * ((parseFloat(selectedPlan?.discount_percentage) || 0) / 100),
+            isExpired
+        };
     };
 
     const getWalksText = (maxWalks) => {
@@ -111,24 +184,67 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
         return policyMap[policy] || 'Política estándar';
     };
 
-    const handlePlanSelect = async (planId) => {
-        if (loading || planId === currentSubscription?.plan) return;
+    const handlePlanSelect = (planId) => {
+        if (loading) return;
 
-        try {
-            setLoading(true);
+        const plan = plans.find(p => (p.plan_id || p.id) === planId);
+        if (!plan) return;
+
+        setPlanToConfirm(plan);
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmSubscription = () => {
+        if (!planToConfirm) return;
+
+        const planId = planToConfirm.plan_id || planToConfirm.id;
+        const paymentData = calculatePaymentInfo(planToConfirm, currentSubscription);
+        
+        setPreviousPlan(currentSubscription?.plan);
+        setPaymentInfo(paymentData);
+        setShowConfirmModal(false);
+        
+        setTimeout(() => {
+            setProcessingPlan(planToConfirm);
+            setShowPaymentProcessModal(true);
             setSelectedPlan(planId);
-            
-            const result = await SettingsController.updateSubscription(user?.id, planId);
-            onSubscriptionUpdate(result, currentSubscription?.plan);
-            
-            onClose();
+        }, 300);
+
+        setTimeout(async () => {
+            try {
+                setLoading(true);
+                const result = await SettingsController.updateSubscription(user?.id, planId);
+                onSubscriptionUpdate(result, currentSubscription?.plan);
+                setPlanToConfirm(null);
+            } catch (error) {
+                console.error('Error updating subscription:', error);
+                setShowPaymentProcessModal(false);
+                setSelectedPlan(null);
+            } finally {
+                setLoading(false);
+            }
+        }, 500);
+    };
+
+    const handleClosePaymentProcessModal = () => {
+        setShowPaymentProcessModal(false);
+        setProcessingPlan(null);
+        setSelectedPlan(null);
+        setShowSuccessModal(true);
+    };
+
+    const handleCloseSuccessModal = () => {
+        setShowSuccessModal(false);
+        setPreviousPlan(null);
+        setPaymentInfo(null);
+        onClose();
+    };
+
+    const handleCloseConfirmModal = () => {
+        if (!loading) {
+            setShowConfirmModal(false);
+            setPlanToConfirm(null);
             setSelectedPlan(null);
-            
-        } catch (error) {
-            console.error('Error updating subscription:', error);
-            setSelectedPlan(null);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -217,7 +333,7 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
                                     const isCurrentPlan = currentSubscription?.plan === planId;
                                     const isExpiredPlan = isCurrentPlan && isExpired(currentSubscription?.expiryDate);
                                     const isSelected = selectedPlan === planId;
-                                                                        
+                                    
                                     return (
                                         <div
                                             key={planId}
@@ -256,7 +372,6 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
                                             )}
 
                                             <div className="p-6">
-                                                
                                                 <div className="text-center mb-6">
                                                     <div className={`inline-flex p-3 rounded-full bg-gradient-to-r ${plan.color} mb-4`}>
                                                         <IconComponent className="text-2xl text-white" />
@@ -286,7 +401,6 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
                                                 </div>
 
                                                 <div className="space-y-3 mb-6">
-                                                    
                                                     <div className="flex items-start space-x-3">
                                                         <FaCheck className="text-success mt-0.5 flex-shrink-0" />
                                                         <span className="text-sm text-foreground dark:text-background font-medium">
@@ -365,6 +479,30 @@ const SubscriptionModal = ({ isOpen, onClose, currentSubscription, onSubscriptio
                     )}
                 </div>
             </div>
+
+            <SubscriptionConfirmModal
+                isOpen={showConfirmModal}
+                onClose={handleCloseConfirmModal}
+                onConfirm={handleConfirmSubscription}
+                selectedPlan={planToConfirm}
+                currentSubscription={currentSubscription}
+                isLoading={loading}
+                allPlans={plans}
+            />
+
+            <SubscriptionPaymentProcessModal
+                isOpen={showPaymentProcessModal}
+                onClose={handleClosePaymentProcessModal}
+                planData={processingPlan}
+                paymentInfo={paymentInfo}
+            />
+
+            <SubscriptionSuccessModal
+                isOpen={showSuccessModal}
+                onClose={handleCloseSuccessModal}
+                subscription={currentSubscription}
+                previousPlan={previousPlan}
+            />
         </div>
     );
 };
