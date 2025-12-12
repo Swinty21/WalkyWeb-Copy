@@ -9,12 +9,12 @@ const SearchWalker = () => {
     const [location, setLocation] = useState("");
     const [rating, setRating] = useState(0);
     const [hasGps, setHasGps] = useState(false);
+    const [experienceYears, setExperienceYears] = useState(0);
     const [filteredWalkers, setFilteredWalkers] = useState([]);
     const [walkers, setWalkers] = useState([]);
     const [availableLocations, setAvailableLocations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [showFilters, setShowFilters] = useState(false);
 
     const { navigateToContent } = useNavigation();
 
@@ -31,16 +31,43 @@ const SearchWalker = () => {
                     walkersForSearch.map(async (walker) => {
                         try {
                             const settings = await WalkerController.fetchWalkerSettings(walker.id);
+                            
+                            let years = 0;
+                            if (settings?.experienceYears) {
+                                years = settings.experienceYears;
+                            } else if (walker.experienceYears) {
+                                years = walker.experienceYears;
+                            } else if (walker.experience) {
+                                const match = walker.experience.match(/(\d+)\s*(?:año|anos|years|year)/i);
+                                if (match) {
+                                    years = parseInt(match[1], 10);
+                                } else {
+                                    console.log(`${walker.name} - no match found in experience`);
+                                }
+                            }
+                            
                             return {
                                 ...walker,
                                 hasGPSTracker: settings?.hasGPSTracker || false,
-                                pricePerPet: settings?.pricePerPet || walker.pricePerPet || 15000
+                                pricePerPet: settings?.pricePerPet || walker.pricePerPet || 15000,
+                                experienceYears: years
                             };
                         } catch (err) {
+                            let years = 0;
+                            if (walker.experienceYears) {
+                                years = walker.experienceYears;
+                            } else if (walker.experience) {
+                                const match = walker.experience.match(/(\d+)\s*(?:año|anos|years|year)/i);
+                                if (match) {
+                                    years = parseInt(match[1], 10);
+                                }
+                            }
+                            
                             return {
                                 ...walker,
                                 hasGPSTracker: false,
-                                pricePerPet: walker.pricePerPet || 15000
+                                pricePerPet: walker.pricePerPet || 15000,
+                                experienceYears: years
                             };
                         }
                     })
@@ -67,10 +94,16 @@ const SearchWalker = () => {
             const matchesLocation = !location || walker.location === location;
             const matchesRating = !rating || walker.rating >= rating;
             const matchesGps = !hasGps || walker.hasGPSTracker === hasGps;
-            return matchesSearch && matchesLocation && matchesRating && matchesGps;
+            const matchesExperience = !experienceYears || (walker.experienceYears && walker.experienceYears >= experienceYears);
+            
+            if (experienceYears > 0) {
+                console.log(`${walker.name}: experienceYears=${walker.experienceYears}, filter=${experienceYears}, matches=${matchesExperience}`);
+            }
+            
+            return matchesSearch && matchesLocation && matchesRating && matchesGps && matchesExperience;
         });
         setFilteredWalkers(filtered);
-    }, [search, location, rating, hasGps, walkers]);
+    }, [search, location, rating, hasGps, experienceYears, walkers]);
 
     const handleViewProfile = (walkerId) => {
         navigateToContent('walker-profile', { walkerId });
@@ -81,6 +114,7 @@ const SearchWalker = () => {
         setLocation("");
         setRating(0);
         setHasGps(false);
+        setExperienceYears(0);
     };
 
     if (loading) {
@@ -115,9 +149,9 @@ const SearchWalker = () => {
                     setRating={setRating}
                     hasGps={hasGps}
                     setHasGps={setHasGps}
+                    experienceYears={experienceYears}
+                    setExperienceYears={setExperienceYears}
                     availableLocations={availableLocations}
-                    showFilters={showFilters}
-                    setShowFilters={setShowFilters}
                     clearFilters={clearFilters}
                 />
 
